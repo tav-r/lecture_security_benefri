@@ -5,7 +5,7 @@ use std::iter::FromIterator;
 
 use super::hash_files::HashWalker;
 
-pub fn check_directory(dir_path: &str, old_mapping: &HashMap<&str, &str>) -> Result<(Vec<String>, Vec<String>, Vec<String>), Box<dyn Error>> {
+pub fn check_directory(dir_path: &str, old_mapping: &HashMap<String, String>) -> Result<(Vec<String>, Vec<String>, Vec<String>), Box<dyn Error>> {
     let mut changed = Vec::new();
     let mut new = Vec::new();
 
@@ -14,7 +14,7 @@ pub fn check_directory(dir_path: &str, old_mapping: &HashMap<&str, &str>) -> Res
 
     for (file_path, hash) in &new_mapping {
         if let Some(entry) = old_mapping.get(&file_path[..]) {
-            if hash != *entry {
+            if hash != entry {
                 changed.push(String::from(file_path))
             }
         } else {
@@ -23,9 +23,9 @@ pub fn check_directory(dir_path: &str, old_mapping: &HashMap<&str, &str>) -> Res
     }
 
     let deleted = old_mapping.iter().filter(|(file_path, _)| {
-        new_mapping.get(**file_path).is_none()
+        new_mapping.get(*file_path).is_none()
     }).map(|(file_path, _)| {
-        String::from(*file_path)
+        String::from(file_path)
     }).collect();
 
     Ok((changed, new, deleted))

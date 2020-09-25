@@ -30,7 +30,7 @@ impl Iterator for HashWalker {
      fn next(&mut self) -> Option<(String, String)> {
         if let Some(entry_res) = self.iterator.next() {
             let entry = entry_res.unwrap();
-            let path = canonicalize(entry.path()).unwrap();
+            let path = canonicalize(entry.path()).expect(&format!("Could not canonicalize file {:?}", entry));
             let pathtype = entry.metadata().unwrap().file_type();
 
             // Ignore symlinks for now
