@@ -41,22 +41,20 @@ pub fn print_changes(
     changed: &Vec<String>,
     deleted: &Vec<String>)
 -> Result<(), Box<dyn Error>> {
-        term.write_line("Changed:")?;
-        for c in changed {
-            term.write_line(&format!("\t{}", c))?;
+    for (n, v) in vec![("Changed", changed), ("New", new), ("Deleted", deleted)] {
+        term.write_line(&format!("{}:", n))?;
+        if v.len() > 0 {
+            for e in v {
+                term.write_line(&format!("\t{}", e))?;
+            }
+        } else {
+            term.write_line("\t(None)")?;
         }
+    }
 
-        term.write_line("new:")?;
-        for n in new {
-            term.write_line(&format!("\t{}", n))?;
-        }
+    term.write_str("\n")?;
 
-        term.write_line("Deleted:")?;
-        for d in deleted {
-            term.write_line(&format!("\t{}", d))?;
-        }
-
-        Ok(())
+    Ok(())
 }
 
 pub fn get_contents(paths: Args, term: &console::Term) -> Result<Vec<(String, String)>, Box<dyn Error>> {
@@ -104,16 +102,17 @@ fn check_mode(mut arguments: Args) -> Result<(), Box<dyn Error>> {
     let hash_file_path = arguments.next().expect("No hash file specified!");
 
     term.write_line("Running...")?;
-    term.write_str("\tParsing json")?;
+    term.write_line("\tParsing json")?;
 
     let mapping = file_handling::parse_json_file(&hash_file_path)?;
 
+    let (changed, new, deleted) = check_changes(&mapping, arguments, &term)?;
+
+    term.move_cursor_up(1)?;
     term.clear_line()?;
     term.move_cursor_up(1)?;
     term.clear_line()?;
     term.write_line("Done!")?;
-
-    let (changed, new, deleted) = check_changes(&mapping, arguments, &term)?;
 
     if let Ok(_) = var("LIST_CHANGES") {
         print_changes(&term, &changed, &new, &deleted)?;
