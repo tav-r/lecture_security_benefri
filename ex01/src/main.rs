@@ -37,11 +37,16 @@ fn hash_mode(mut arguments: Args) -> Result<(), Box<dyn Error>> {
 
 pub fn print_changes(
     term: &console::Term,
-    new: &Vec<String>,
     changed: &Vec<String>,
-    deleted: &Vec<String>)
--> Result<(), Box<dyn Error>> {
-    for (n, v) in vec![("Changed", changed), ("New", new), ("Deleted", deleted)] {
+    new_files: &Vec<String>,
+    deleted_files: &Vec<String>,
+    new_dirs: &Vec<String>,
+    deleted_dirs: &Vec<String>
+) -> Result<(), Box<dyn Error>> {
+    for (n, v) in vec![
+        ("Changed files", changed), ("New files", new_files), ("Deleted files", deleted_files),
+        ("New directories", new_dirs), ("Deleted directories", deleted_dirs)
+    ] {
         term.write_line(&format!("{}:", n))?;
         if v.len() > 0 {
             for e in v {
@@ -76,37 +81,51 @@ pub fn get_contents(paths: Args, term: &console::Term) -> Result<Vec<(String, St
 
 fn check_changes(
     mapping: &HashMap<String, String>,
-    arguments: Args,
+    dir_path: &str,
     term: &console::Term
-) -> Result<(Vec<String>, Vec<String>, Vec<String>), Box<dyn Error>> {
+) -> Result<(
+    Vec<String>,
+    Vec<String>,
+    Vec<String>,
+    Vec<String>,
+    Vec<String>
+), Box<dyn Error>> {
 
     let mut changed = Vec::new();
-    let mut new = Vec::new();
-    let mut deleted = Vec::new();
+    let mut new_files = Vec::new();
+    let mut deleted_files = Vec::new();
+    let mut new_dirs = Vec::new();
+    let mut deleted_dirs = Vec::new();
 
-    for dir_path in arguments {
-        term.write_str(&format!("\tLooking for changes in {}", dir_path))?;
-        let (mut c, mut n, mut d) = check_hashes::check_directory(&dir_path, mapping)?;
-        changed.append(&mut c);
-        new.append(&mut n);
-        deleted.append(&mut d);
+    term.write_str(&format!("\tLooking for changes in {}", dir_path))?;
 
-        term.clear_line()?;
-   }
+    let (mut c, mut nf, mut df, mut nd, mut dd) = check_hashes::check_directory(&dir_path, mapping)?;
 
-   Ok((changed, new, deleted))
+    changed.append(&mut c);
+    new_files.append(&mut nf);
+    deleted_files.append(&mut df);
+    new_dirs.append(&mut nd);
+    deleted_dirs.append(&mut dd);
+
+    term.clear_line()?;
+
+   Ok((changed, new_files, deleted_files, new_dirs, deleted_dirs))
 }
 
 fn check_mode(mut arguments: Args) -> Result<(), Box<dyn Error>> {
+    let mut sw = stopwatch::Stopwatch::new();
     let term = Term::stdout();
     let hash_file_path = arguments.next().expect("No hash file specified!");
+    let dir_path = arguments.next().expect("No directory specified");
 
     term.write_line("Running...")?;
     term.write_line("\tParsing json")?;
 
+    sw.start();
+
     let mapping = file_handling::parse_json_file(&hash_file_path)?;
 
-    let (changed, new, deleted) = check_changes(&mapping, arguments, &term)?;
+    let (changed, new_files, deleted_files, new_dirs, deleted_dirs) = check_changes(&mapping, &dir_path, &term)?;
 
     term.move_cursor_up(1)?;
     term.clear_line()?;
@@ -115,12 +134,16 @@ fn check_mode(mut arguments: Args) -> Result<(), Box<dyn Error>> {
     term.write_line("Done!")?;
 
     if let Ok(_) = var("LIST_CHANGES") {
-        print_changes(&term, &changed, &new, &deleted)?;
+        print_changes(&term, &changed, &new_files, &deleted_files, &new_dirs, &deleted_dirs)?;
     }
 
+    sw.stop();
+
     term.write_line(
-        &format!("\t{} files changed, {} new files, {} files deleted, {} files unchanged",
-            changed.len(), new.len(), deleted.len(), mapping.len() - changed.len()))?;
+        &format!("\t{} files changed, {} new files, {} files deleted, {} new directories, \
+                  {} deleted directories\n\t(checked {} files and directories in {} seconds)",
+            changed.len(), new_files.len(), deleted_files.len(), new_dirs.len(), deleted_dirs.len(),
+            mapping.len() + new_dirs.len() + new_files.len(), sw.elapsed().as_secs()))?;
 
     Ok(())
 }
