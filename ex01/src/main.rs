@@ -3,7 +3,6 @@ mod lib;
 
 use std::env::{args,Args,var};
 use std::error::Error;
-use std::collections::HashMap;
 use std::ffi::OsString;
 
 use console::Term;
@@ -79,53 +78,24 @@ pub fn get_contents(paths: Args, term: &console::Term) -> Result<Vec<(String, St
     Ok(tot)
 }
 
-fn check_changes(
-    mapping: &HashMap<String, String>,
-    dir_path: &str,
-    term: &console::Term
-) -> Result<(
-    Vec<String>,
-    Vec<String>,
-    Vec<String>,
-    Vec<String>,
-    Vec<String>
-), Box<dyn Error>> {
-
-    let mut changed = Vec::new();
-    let mut new_files = Vec::new();
-    let mut deleted_files = Vec::new();
-    let mut new_dirs = Vec::new();
-    let mut deleted_dirs = Vec::new();
-
-    term.write_str(&format!("\tLooking for changes in {}", dir_path))?;
-
-    let (mut c, mut nf, mut df, mut nd, mut dd) = check_hashes::check_directory(&dir_path, mapping)?;
-
-    changed.append(&mut c);
-    new_files.append(&mut nf);
-    deleted_files.append(&mut df);
-    new_dirs.append(&mut nd);
-    deleted_dirs.append(&mut dd);
-
-    term.clear_line()?;
-
-   Ok((changed, new_files, deleted_files, new_dirs, deleted_dirs))
-}
-
 fn check_mode(mut arguments: Args) -> Result<(), Box<dyn Error>> {
     let mut sw = stopwatch::Stopwatch::new();
     let term = Term::stdout();
     let hash_file_path = arguments.next().expect("No hash file specified!");
     let dir_path = arguments.next().expect("No directory specified");
 
+    sw.start();
+
     term.write_line("Running...")?;
     term.write_line("\tParsing json")?;
 
-    sw.start();
-
     let mapping = file_handling::parse_json_file(&hash_file_path)?;
 
-    let (changed, new_files, deleted_files, new_dirs, deleted_dirs) = check_changes(&mapping, &dir_path, &term)?;
+    term.write_str(&format!("\tLooking for changes in {}", dir_path))?;
+
+    let (changed, new_files, deleted_files, new_dirs, deleted_dirs) = check_hashes::check_directory(&dir_path, &mapping)?;
+
+    term.clear_line()?;
 
     term.move_cursor_up(1)?;
     term.clear_line()?;
