@@ -21,10 +21,11 @@ fn print_usage(prog_name: &str) {
 fn hash_mode(mut arguments: Args) -> Result<(), Box<dyn Error>> {
     let term = Term::stdout();
     let out_file = arguments.next().expect("No out file specified!");
+    let path_str = arguments.next().expect("No directory specified!");
 
     term.write_line("Running...")?;
 
-    let contents = get_contents(arguments, &term)?;
+    let contents = get_contents(&path_str, &term)?;
     file_handling::save_contents(&out_file, contents)?;
 
     term.move_cursor_up(1)?;
@@ -61,19 +62,17 @@ pub fn print_changes(
     Ok(())
 }
 
-pub fn get_contents(paths: Args, term: &console::Term) -> Result<Vec<(String, String)>, Box<dyn Error>> {
+pub fn get_contents(path_str: &str, term: &console::Term) -> Result<Vec<(String, String)>, Box<dyn Error>> {
     let mut tot = vec![];
 
-    for (n, path) in paths.enumerate() {
-        term.write_str(&format!("\t{}. hashing files in {}", n + 1, path))?;
-        let walker = HashWalker::new(OsString::from(path)).unwrap();
+    term.write_str(&format!("\thashing files in {}", path_str))?;
+    let walker = HashWalker::new(OsString::from(path_str)).unwrap();
 
-        for (path_str, hash) in walker {
-            tot.push((path_str, hash))
-        }
-
-        term.clear_line()?;
+    for (path_str, hash) in walker {
+        tot.push((path_str, hash))
     }
+
+    term.clear_line()?;
 
     Ok(tot)
 }
