@@ -1,5 +1,4 @@
 use std::error::Error;
-use std::env::{Args,var};
 
 use console::Term;
 
@@ -33,11 +32,9 @@ fn print_changes(
     Ok(())
 }
 
-pub fn check_mode(mut arguments: Args) -> Result<(), Box<dyn Error>> {
+pub fn check_mode(dir_path: &str, hash_file_path: &str, full_list: bool) -> Result<(), Box<dyn Error>> {
     let mut sw = stopwatch::Stopwatch::new();
     let term = Term::stdout();
-    let hash_file_path = arguments.next().expect("No hash file specified!");
-    let dir_path = arguments.next().expect("No directory specified");
 
     sw.start();
 
@@ -58,7 +55,7 @@ pub fn check_mode(mut arguments: Args) -> Result<(), Box<dyn Error>> {
     term.clear_line()?;
     term.write_line("Done!")?;
 
-    if let Ok(_) = var("LIST_CHANGES") {
+    if full_list {
         print_changes(&term, &changed, &new_files, &deleted_files, &new_dirs, &deleted_dirs)?;
     }
 

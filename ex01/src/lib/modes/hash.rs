@@ -1,6 +1,5 @@
 use std::error::Error;
 use std::ffi::OsString;
-use std::env::Args;
 
 use console::Term;
 
@@ -22,10 +21,8 @@ fn get_contents(path_str: &str, term: &console::Term) -> Result<Vec<(String, Str
     Ok(tot)
 }
 
-pub fn hash_mode(mut arguments: Args) -> Result<(), Box<dyn Error>> {
+pub fn hash_mode(path_str: &str, out_file: &str) -> Result<(), Box<dyn Error>> {
     let term = Term::stdout();
-    let out_file = arguments.next().expect("No out file specified!");
-    let path_str = arguments.next().expect("No directory specified!");
 
     term.write_line("Running...")?;
 

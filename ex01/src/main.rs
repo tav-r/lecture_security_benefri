@@ -1,30 +1,30 @@
 mod lib;
 
 
-use std::env::{args};
 use std::error::Error;
+use clap::{App,Arg,SubCommand};
 
 use lib::modes::{hash,check};
 
-fn print_usage(prog_name: &str) {
-    println!("Usage: 
-    to hash files:
-        {} hash OUT_FILE PATH1 [PATH2 [...[PATHn]]]
-    and to check files against hashes in HASH_FILE:
-        {} check HASH_FILE [PATH1 [...[PATHn]]]",
-    prog_name, prog_name)
-}
-
 fn main() -> Result<(), Box<dyn Error>> {
-    let mut arguments = args();
-    let prog_name = arguments.next().unwrap();
-    let mode = arguments.next().unwrap_or(String::from("help"));
+    let matches = App::new("ex01")
+        .arg(Arg::with_name("file").long("file").short("f").takes_value(true).help("Path to file with hashes").required(true))
+        .subcommand(SubCommand::with_name("check").about("Check hash file for given path")
+            .arg(Arg::with_name("list").long("list").short("l").help("List changed files and directories"))
+            .arg(Arg::with_name("path").value_name("PATH").takes_value(true).required(true))
+        )
+        .subcommand(SubCommand::with_name("hash").about("Create hash file for given path")
+            .arg(Arg::with_name("path").value_name("PATH").takes_value(true).required(true))
+        )
+        .get_matches();
 
-    match &mode[..] {
-        "hash" => hash::hash_mode(arguments),
-        "check" => check::check_mode(arguments),
+    let hash_file_path = matches.value_of("file").unwrap();
+
+    match matches.subcommand() {
+        ("hash", Some(subcomm)) => hash::hash_mode(subcomm.value_of("path").unwrap(), hash_file_path),
+        ("check", Some(subcomm)) => check::check_mode(subcomm.value_of("path").unwrap(), hash_file_path, subcomm.is_present("list")),
         _ => {
-            print_usage(&prog_name);
+            println!("{}", matches.usage());
             Ok(())
         }
     }
