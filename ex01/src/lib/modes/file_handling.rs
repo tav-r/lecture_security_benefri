@@ -1,9 +1,8 @@
 use std::collections::HashMap;
 use std::fs::File;
-use std::io::BufReader;
+use std::io::{BufReader,prelude::*};
 use std::error::Error;
 use std::iter::FromIterator;
-use std::io::prelude::*;
 
 
 pub fn parse_json_file(hash_file_path: &str) -> Result<HashMap<String, String>, Box<dyn Error>> {
