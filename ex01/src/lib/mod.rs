@@ -1,2 +1,2 @@
 pub mod modes;
-pub mod hashes;
+pub mod hashing;

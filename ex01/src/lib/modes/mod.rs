@@ -3,4 +3,4 @@ pub mod analyze;
 
 mod file_handling;
 
-use crate::lib::hashes::{check_hashes,hash_files};
+use crate::lib::hashing::{check_hashes,hash_files};
