@@ -39,14 +39,13 @@ pub fn analyze_mode(dir_path: &str, hash_file_path: &str, exception_file_path: O
     sw.start();
 
     term.write_line("Running...")?;
-    term.write_line("\tParsing exception file")?;
 
     let exceptions = match exception_file_path {
         Some(path) => Some(file_handling::parse_exception_file(path)?),
         None => None
     };
 
-    term.write_line("\tParsing json")?;
+    term.write_line("\tParsing hash file")?;
 
     let mapping = file_handling::parse_json_file(&hash_file_path)?;
 
@@ -54,7 +53,7 @@ pub fn analyze_mode(dir_path: &str, hash_file_path: &str, exception_file_path: O
 
     let (changed, new_files, deleted_files, new_dirs, deleted_dirs) = check_hashes::check_directory(&dir_path, &mapping, exceptions)?;
 
-    for _ in 0..4 {
+    for _ in 0..3 {
         term.move_cursor_up(1)?;
         term.clear_line()?;
     }
