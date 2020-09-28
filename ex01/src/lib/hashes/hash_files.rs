@@ -45,7 +45,7 @@ impl Iterator for HashWalker {
  
             // skip files on exception list
             if let Some(exceptions_list) = &self.exceptions {
-                if exceptions_list.contains(&path_str) {
+                if exceptions_list.contains(&path_str) || (pathtype.is_dir() && exceptions_list.contains(&format!("{}/", path_str))) {
                     return self.next()
                 }
             }
