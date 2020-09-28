@@ -1,12 +1,14 @@
 use std::error::Error;
 use std::ffi::OsString;
-use std::collections::HashMap;
+use std::collections::{HashMap,HashSet};
 use std::iter::FromIterator;
 
 use super::{hash_files::HashWalker,DIR_STR};
 
 pub fn check_directory(
-    dir_path: &str, old_mapping: &HashMap<String, String>
+    dir_path: &str,
+    old_mapping: &HashMap<String, String>,
+    exceptions: Option<HashSet<String>>
 ) -> Result<(
     Vec<String>,
     Vec<String>,
@@ -20,7 +22,7 @@ pub fn check_directory(
     let mut deletedf = Vec::new();
     let mut deletedd = Vec::new();
 
-    let walker = HashWalker::new(OsString::from(dir_path));
+    let walker = HashWalker::new(OsString::from(dir_path), exceptions);
     let new_mapping: HashMap<String, String> = HashMap::from_iter(walker?);
 
     for (file_path, hash) in &new_mapping {

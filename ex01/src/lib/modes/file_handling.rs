@@ -1,9 +1,13 @@
-use std::collections::HashMap;
+use std::collections::{HashMap,HashSet};
 use std::fs::File;
 use std::io::{BufReader,prelude::*};
 use std::error::Error;
 use std::iter::FromIterator;
 
+
+pub fn parse_exception_file(exceptions_file_path: &str) -> Result<HashSet<String>, Box<dyn Error>> {
+    Ok(BufReader::new(File::open(exceptions_file_path)?).lines().map(|r| r.unwrap()).collect())
+}
 
 pub fn parse_json_file(hash_file_path: &str) -> Result<HashMap<String, String>, Box<dyn Error>> {
     let reader = BufReader::new(File::open(hash_file_path)?);

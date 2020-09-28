@@ -3,6 +3,7 @@ use std::io::{prelude::*};
 use std::ffi::{OsString};
 use std::error::Error;
 use std::iter::Iterator;
+use std::collections::HashSet;
 
 use super::DIR_STR;
 
@@ -16,13 +17,14 @@ fn get_file_hash(entry: &DirEntry) -> Result<String, Box<dyn Error>> {
 
 pub struct HashWalker {
     dir_stack: Vec<OsString>,
-    iterator: ReadDir
+    iterator: ReadDir,
+    exceptions: Option<HashSet<String>>
 }
 
 impl HashWalker {
-    pub fn new(path_str: OsString) -> Result<Self, Box<dyn Error>> {
+    pub fn new(path_str: OsString, exceptions: Option<HashSet<String>>) -> Result<Self, Box<dyn Error>> {
         let stack = Vec::new();
-        Ok(Self{dir_stack: stack, iterator: read_dir(path_str).unwrap()})
+        Ok(Self{dir_stack: stack, iterator: read_dir(path_str).unwrap(), exceptions: exceptions})
     }
 }
 
@@ -33,22 +35,28 @@ impl Iterator for HashWalker {
         if let Some(entry_res) = self.iterator.next() {
             let entry = entry_res.unwrap();
             let pathtype = entry.metadata().unwrap().file_type();
-            let path_str;
+            let mut path_str = String::from(entry.path().as_os_str().to_str().unwrap());
             let hash;
 
-            // Ignore symlinks for now
+            // skip symlinks (to avoid having to deal with infinite loops)
             if pathtype.is_symlink() {
                 return self.next()
             }
  
-            // push directory to stack for later traversal an go on to next entry
+            // skip files on exception list
+            if let Some(exceptions_list) = &self.exceptions {
+                if exceptions_list.contains(&path_str) {
+                    return self.next()
+                }
+            }
+
+            // push entry on stack and set 'special' hash val if it is a directory
             if pathtype.is_dir() {
                 self.dir_stack.push(OsString::from(entry.path().as_os_str()));
                 hash = String::from(DIR_STR);
-                path_str = format!("{}/", entry.path().as_os_str().to_str().unwrap());
+                path_str = format!("{}/", path_str);
             } else {
                 hash = get_file_hash(&entry).unwrap();
-                path_str = String::from(entry.path().as_os_str().to_str().unwrap());
             }
 
             Some((path_str, hash))

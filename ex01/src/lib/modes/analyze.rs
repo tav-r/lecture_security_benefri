@@ -32,34 +32,40 @@ fn print_changes(
     Ok(())
 }
 
-pub fn check_mode(dir_path: &str, hash_file_path: &str, full_list: bool) -> Result<(), Box<dyn Error>> {
+pub fn analyze_mode(dir_path: &str, hash_file_path: &str, exception_file_path: Option<&str>, full_list: bool) -> Result<(), Box<dyn Error>> {
     let mut sw = stopwatch::Stopwatch::new();
     let term = Term::stdout();
 
     sw.start();
 
     term.write_line("Running...")?;
+    term.write_line("\tParsing exception file")?;
+
+    let exceptions = match exception_file_path {
+        Some(path) => Some(file_handling::parse_exception_file(path)?),
+        None => None
+    };
+
     term.write_line("\tParsing json")?;
 
     let mapping = file_handling::parse_json_file(&hash_file_path)?;
 
-    term.write_str(&format!("\tLooking for changes in {}", dir_path))?;
+    term.write_line(&format!("\tLooking for changes in {}", dir_path))?;
 
-    let (changed, new_files, deleted_files, new_dirs, deleted_dirs) = check_hashes::check_directory(&dir_path, &mapping)?;
+    let (changed, new_files, deleted_files, new_dirs, deleted_dirs) = check_hashes::check_directory(&dir_path, &mapping, exceptions)?;
 
-    term.clear_line()?;
+    for _ in 0..4 {
+        term.move_cursor_up(1)?;
+        term.clear_line()?;
+    }
 
-    term.move_cursor_up(1)?;
-    term.clear_line()?;
-    term.move_cursor_up(1)?;
-    term.clear_line()?;
     term.write_line("Done!")?;
+
+    sw.stop();
 
     if full_list {
         print_changes(&term, &changed, &new_files, &deleted_files, &new_dirs, &deleted_dirs)?;
     }
-
-    sw.stop();
 
     term.write_line(
         &format!("\t{} files changed, {} new files, {} files deleted, {} new directories, \

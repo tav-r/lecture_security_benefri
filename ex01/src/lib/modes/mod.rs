@@ -1,5 +1,5 @@
-pub mod hash;
-pub mod check;
+pub mod index;
+pub mod analyze;
 
 mod file_handling;
 
