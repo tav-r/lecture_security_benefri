@@ -6,13 +6,13 @@ use console::Term;
 use super::file_handling;
 use super::hash_files;
 
-// The entry function that gets called when the index-subcommand is executed
-//
-// # Arguments
-// * `path_str` - a string describing an absolute or a relative path to the directory to analyze
-// * `out_file` - a string describing an absolute or a relative path to the file to store the hashes
-// * `exception_file_path` - an Option wrapping an optional string describing an absolut or a relative
-//                           path to a file with exceptions (i.e. files or directories not to check)
+/// The entry function that gets called when the index-subcommand is executed
+///
+/// # Arguments
+/// * `path_str` - a string describing an absolute or a relative path to the directory to analyze
+/// * `out_file` - a string describing an absolute or a relative path to the file to store the hashes
+/// * `exception_file_path` - an Option wrapping an optional string describing an absolut or a relative
+///                           path to a file with exceptions (i.e. files or directories not to check)
 pub fn index_mode(path_str: &str, out_file: &str, exception_file_path: Option<&str>) -> Result<(), Box<dyn Error>> {
     let term = Term::stdout();
 

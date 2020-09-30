@@ -5,19 +5,19 @@ use std::iter::FromIterator;
 
 use super::{hash_files::HashWalker,DIR_STR};
 
-// Obtain the changes in a given path relative to a HashMap mapping paths to hash values.
-// The paths of changed files, new files, new directories, deleted files and deleted directories
-// are all returned in a seperate vector of strings.
-// 
-// # Arguments
-// * `dir_path` - string describing a relative or absolute path to a directory to check for changes
-// * `old_mapping` - the 'path->hash value' mapping that describes the old state. Notice that, if
-//                   this contains *relative* paths and `dir_path` was given as an *absolute* path
-//                   (or vice versa), this funciton is not smart enough to check if the same files/
-//                   directories were specified and it will treat these paths as if they would
-//                   describe different folders
-// * `exceptions` - an Option wrapping an optional string describing an absolut or a relative
-//                  path to a file with exceptions (i.e. files or directories not to check)
+/// Obtain the changes in a given path relative to a HashMap mapping paths to hash values.
+/// The paths of changed files, new files, new directories, deleted files and deleted directories
+/// are all returned in a seperate vector of strings.
+/// 
+/// # Arguments
+/// * `dir_path` - string describing a relative or absolute path to a directory to check for changes
+/// * `old_mapping` - the 'path->hash value' mapping that describes the old state. Notice that, if
+///                   this contains *relative* paths and `dir_path` was given as an *absolute* path
+///                   (or vice versa), this funciton is not smart enough to check if the same files/
+///                   directories were specified and it will treat these paths as if they would
+///                   describe different folders
+/// * `exceptions` - an Option wrapping an optional string describing an absolut or a relative
+///                  path to a file with exceptions (i.e. files or directories not to check)
 pub fn check_directory(
     dir_path: &str,
     old_mapping: &HashMap<String, String>,

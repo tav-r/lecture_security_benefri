@@ -31,7 +31,7 @@ impl HashWalker {
 impl Iterator for HashWalker {
      type Item = (String, String);
 
-     // Get the next entry from the internal ReadDir iterator.
+     /// Get the next entry from the internal ReadDir iterator.
      fn next(&mut self) -> Option<(String, String)> {
          // as long as there are entries in the internal ReadDir, go on
         if let Some(entry_res) = self.iterator.next() {
