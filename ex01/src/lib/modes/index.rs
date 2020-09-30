@@ -1,27 +1,18 @@
 use std::error::Error;
 use std::ffi::OsString;
-use std::collections::HashSet;
 
 use console::Term;
 
 use super::file_handling;
 use super::hash_files;
 
-fn get_contents(path_str: &str, term: &console::Term, exceptions: Option<HashSet<String>>) -> Result<Vec<(String, String)>, Box<dyn Error>> {
-    let mut tot = vec![];
-
-    term.write_str(&format!("\thashing files in {}", path_str))?;
-    let walker = hash_files::HashWalker::new(OsString::from(path_str), exceptions).unwrap();
-
-    for (path_str, hash) in walker {
-        tot.push((path_str, hash))
-    }
-
-    term.clear_line()?;
-
-    Ok(tot)
-}
-
+// The entry function that gets called when the index-subcommand is executed
+//
+// # Arguments
+// * `path_str` - a string describing an absolute or a relative path to the directory to analyze
+// * `out_file` - a string describing an absolute or a relative path to the file to store the hashes
+// * `exception_file_path` - an Option wrapping an optional string describing an absolut or a relative
+//                           path to a file with exceptions (i.e. files or directories not to check)
 pub fn index_mode(path_str: &str, out_file: &str, exception_file_path: Option<&str>) -> Result<(), Box<dyn Error>> {
     let term = Term::stdout();
 
@@ -32,7 +23,12 @@ pub fn index_mode(path_str: &str, out_file: &str, exception_file_path: Option<&s
         None => None
     };
 
-    let contents = get_contents(&path_str, &term, exceptions)?;
+    term.write_str(&format!("\thashing files in {}", path_str))?;
+
+    let contents = hash_files::HashWalker::new(OsString::from(path_str), exceptions).unwrap().collect();
+
+    term.clear_line()?;
+
     file_handling::save_contents(&out_file, contents)?;
 
     term.move_cursor_up(1)?;

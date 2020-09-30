@@ -31,7 +31,9 @@ impl HashWalker {
 impl Iterator for HashWalker {
      type Item = (String, String);
 
+     // Get the next entry from the internal ReadDir iterator.
      fn next(&mut self) -> Option<(String, String)> {
+         // as long as there are entries in the internal ReadDir, go on
         if let Some(entry_res) = self.iterator.next() {
             let entry = entry_res.unwrap();
             let pathtype = entry.metadata().unwrap().file_type();
@@ -60,12 +62,14 @@ impl Iterator for HashWalker {
             }
 
             Some((path_str, hash))
+        // if the ReadDir iterator is empty, try to pop a directory from the stack to proceed.
         } else {
             if let Some(dir) = self.dir_stack.pop() {
                 self.iterator = read_dir(dir).unwrap();
                 return self.next()
             }
 
+            // if there are no entries left on the stack, return None
             None
         }
     }

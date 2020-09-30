@@ -5,6 +5,7 @@ use console::Term;
 use super::file_handling;
 use super::check_hashes;
 
+// Write the changes (according to the given vectors) to the given console::Term
 fn print_changes(
     term: &console::Term,
     changed: &Vec<String>,
@@ -32,6 +33,15 @@ fn print_changes(
     Ok(())
 }
 
+// The entry function that gets called when the analyze-subcommand is executed
+//
+// # Arguments
+// * `dir_path` - a string describing an absolute or a relative path to the directory to analyze
+// * `hash_file` - a string describing an absolute or a relative path to the file to store the hashes
+// * `exception_file_path` - an Option wrapping an optional string describing an absolut or a relative
+//                           path to a file with exceptions (i.e. files or directories not to check)
+// * `full_list` - a boolean value, if set true, a list with changed, deleted and new files and
+//                 directories will be printed
 pub fn analyze_mode(dir_path: &str, hash_file_path: &str, exception_file_path: Option<&str>, full_list: bool) -> Result<(), Box<dyn Error>> {
     let mut sw = stopwatch::Stopwatch::new();
     let term = Term::stdout();

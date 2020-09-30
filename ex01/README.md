@@ -1,15 +1,35 @@
 # Exercise 1
 **This program was only tested on Linux and I do not know if it also works on MacOS or Windows (although I think it should)**.
 ## Build
-To build the project, [cargo](https://github.com/rust-lang/cargo) (and all its dependencies like `rustc`) must be installed. An easy way to get the rust-toolchain is described at [rustup.rs](https://rustup.rs/). When you have `carg`, run:
+To build the project, [cargo](https://github.com/rust-lang/cargo) (and all its dependencies like `rustc`) must be installed. An easy way to get the rust-toolchain is described at [rustup.rs](https://rustup.rs/). When you have `cargo`, run:
 ```bash 
 cd ex01 && cargo build --release
 ``` 
-The compiled binary will be in `ex01/target/release/ex01`
+The compiled binary will be at `ex01/target/release/ex01`
 
 ## Using the program
-Run `ex01 help` or `ex01 -h` or `ex01 --help` to get an overview:
+An example usage might be the following: The file `/tmp/exceptions` contains the following lines:
 ```
+/home/user/hugedirectory
+/home/user/somedirectory/irrelevantfile
+```
+To index `/home/user` ignoring the paths in the `exceptions`-file and to store the hash file at `/tmp/hashes.json` run
+```
+$ target/release/ex01 -e /tmp/exceptions -f /tmp/hashes.json index /home/user
+```
+This may take a while, depending on the size of the folder to index. When the program has finished its work, you can run
+```
+$ target/release/ex01 -e /tmp/exceptions -f /tmp/hashes.json analyze /home/user
+```
+You will get an output like
+```
+Done!
+	0 files changed, 8 new files, 2994 files deleted, 1 new directories, 585 deleted directories
+	(checked 27756 files and directories in 1 seconds)
+```
+
+Run `ex01 help` or `ex01 -h` or `ex01 --help` to get a more detailed overview:
+```bash
 $ ./ex01 -h
 ex01
 
