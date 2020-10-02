@@ -1,9 +1,7 @@
 from typing import List, Optional, Tuple
-from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 import asyncore
-import socket
 import pickle
-import logging
+import socket
 
 from custom_crypto import rsa
 from sinks import EncryptSink, DecryptSink
@@ -20,6 +18,18 @@ def get_default_rsa_keys() -> Tuple[Tuple[int, int], Tuple[int, int]]:
 
 
 class ProxyServer(asyncore.dispatcher):
+    """
+    A proxy server for an encrypted tunnel.
+
+    The "protocol" works like this:
+        1. When the proxy client connects, an rsa public key is sent
+        2. The server waits for the client to send an encrypted AES-GCM key
+        3. The server starts listening for a connection from an application
+        4. As soon as an application connects, the server starts reading data
+           from the new socket, encrypts it and forwards it to the client
+           (and vice versa)
+    """
+
     def __init__(
         self,
         enc_addr: str,
@@ -27,7 +37,7 @@ class ProxyServer(asyncore.dispatcher):
         app_addr: str,
         app_port: int
     ):
-        asyncore.dispatcher.__init__(self)
+        super().__init__()
 
         self.__app_addr = app_addr
         self.__app_port = app_port
@@ -37,35 +47,40 @@ class ProxyServer(asyncore.dispatcher):
 
         self.__pub_key, self.__priv_key = get_default_rsa_keys()
 
+        # start listening for incoming connection from the client
         self.create_socket()
         self.set_reuse_addr()
         self.bind((enc_addr, enc_port))
-        self.listen(5)
+        self.listen(1)
 
         print("[*] Encryption server started")
 
-    def handle_accepted(self, conn, addr):
-        ip, port = addr
-        print("[*] New connection from {ip}:{port}, sending pub_key")
+    def handle_accepted(self, sock, addr):
+        client_ip, client_port = addr
+        print(f"[*] New connection from {client_ip}:{client_port}, "
+              "sending pub_key")
 
         # initailly send pub_key
-        ser_pub_key = pickle.dumps(self.__pub_key)
+        ser_pub_key: bytes = pickle.dumps(self.__pub_key)
         while ser_pub_key:
-            sent = conn.send(ser_pub_key)
+            sent = sock.send(ser_pub_key)
             ser_pub_key = ser_pub_key[sent:]
 
         print("[*] Waiting for symmetric key")
 
-        sym_key_enc = conn.recv(2048)
-        self.__key = pickle.loads(rsa.decrypt(sym_key_enc, self.__priv_key))
+        sym_key_enc = sock.recv(2048)
+        self.__key = rsa.decrypt(sym_key_enc, self.__priv_key)
 
-        print("[*] Got symmetric key, starting app server")
+        print("[*] Encrypted tunnel established, starting app server")
 
         app_sock = socket.create_server((self.__app_addr, self.__app_port))
         app_sock.listen(1)
-        app, _ = app_sock.accept()
+        app, (app_ip, app_port) = app_sock.accept()
 
-        srv_sink = DecryptSink(conn, self.__key)
+        print(f"[*] An app connected from {app_ip}:{app_port}, starting "
+              "communication")
+
+        srv_sink = DecryptSink(sock, self.__key)
         app_sink = EncryptSink(app, self.__key)
 
         srv_sink.set_other(app_sink)
@@ -75,4 +90,4 @@ class ProxyServer(asyncore.dispatcher):
 if __name__ == "__main__":
     one = ProxyServer('127.0.0.1', 3333, '127.0.0.1', 3000)
 
-    asyncore.loop() 
+    asyncore.loop()

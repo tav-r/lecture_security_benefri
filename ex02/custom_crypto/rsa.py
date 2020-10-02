@@ -1,6 +1,12 @@
+"""
+A custom implementation of schoolbook RSA.
+
+Tests can be run calling python with the '-v' flag, like
+`pyhton rsa.py -v`
+"""
+
 from typing import Tuple, Iterator
 from random import randint
-from sympy import isprime
 
 
 def rand_coprime(num: int) -> int:
@@ -83,8 +89,9 @@ def gen_key(p: int,
     assert p > 0
     assert q > 0
     assert q > 0
-    assert isprime(p)
-    assert isprime(q)
+    # I would have to import sympy for these assert statements to work
+    # assert isprime(p)
+    # assert isprime(q)
 
     N = p * q
     phi_N = (p - 1) * (q - 1)
