@@ -34,8 +34,6 @@ class ProxyClient(asyncore.dispatcher):
     ):
 
         super().__init__()
-        self.__app_addr = app_addr
-        self.__app_port = app_port
 
         print("[*] Connecting to server")
 
@@ -55,14 +53,15 @@ class ProxyClient(asyncore.dispatcher):
 
         srv_sock.send(cipher)
 
-        print("[*] Encrypted session key sent, starting app server")
+        print(f"[*] Encrypted session key sent, starting app server at "
+              f"{app_addr}:{app_port}")
 
-        app_sock = socket.create_server((self.__app_addr, self.__app_port))
-        app_sock.listen(1)
+        app_sock = socket.create_server((app_addr, app_port))
+        app_sock.listen(5)
         app, (app_ip, app_port) = app_sock.accept()
 
         print(f"[*] An app connected from {app_ip}:{app_port}, starting "
-              "communication")
+              f"communication")
 
         srv_sink = DecryptSink(srv_sock, key)
         app_sink = EncryptSink(app, key)

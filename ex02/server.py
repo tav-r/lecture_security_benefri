@@ -53,7 +53,8 @@ class ProxyServer(asyncore.dispatcher):
         self.bind((enc_addr, enc_port))
         self.listen(1)
 
-        print("[*] Encryption server started")
+        print(f"[*] Encryption server started, listening for connections at"
+              f"{enc_addr}:{enc_port}")
 
     def handle_accepted(self, sock, addr):
         client_ip, client_port = addr
@@ -71,14 +72,15 @@ class ProxyServer(asyncore.dispatcher):
         sym_key_enc = sock.recv(2048)
         self.__key = rsa.decrypt(sym_key_enc, self.__priv_key)
 
-        print("[*] Encrypted tunnel established, starting app server")
+        print(f"[*] Encrypted tunnel established, starting app server at "
+              f"{self.__app_addr}:{self.__app_port}")
 
         app_sock = socket.create_server((self.__app_addr, self.__app_port))
-        app_sock.listen(1)
+        app_sock.listen(5)
         app, (app_ip, app_port) = app_sock.accept()
 
         print(f"[*] An app connected from {app_ip}:{app_port}, starting "
-              "communication")
+              f"communication")
 
         srv_sink = DecryptSink(sock, self.__key)
         app_sink = EncryptSink(app, self.__key)

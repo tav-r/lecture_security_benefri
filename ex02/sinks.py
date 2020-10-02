@@ -42,7 +42,10 @@ class Sink(asyncore.dispatcher):
     def handle_read(self):
         assert self.__other
 
-        self.__other.buf += self.recv(4096*4)
+        try:
+            self.__other.buf += self.recv(4096*4)
+        except EOFError:
+            ...
 
     def handle_write(self):
         sent = self.send(self.__buf)
@@ -50,7 +53,7 @@ class Sink(asyncore.dispatcher):
 
     def handle_close(self):
         self.close()
-        if self.__other.other:
+        if self.__other:
             self.__other.close()
             self.__other = None
 
@@ -87,9 +90,14 @@ class EncryptSink(Sink):
     def handle_read(self):
         assert self.other
 
+        try:
+            data = self.recv(4096*4)
+        except EOFError:
+            self.close()
+
         aesgcm = AESGCM(self.__key)
         nonce = os.urandom(12)
-        data = self.recv(4096*4)
+
         aad = b"???"
         cipher_text = aesgcm.encrypt(nonce, data, aad)
         self.other.buf += pickle.dumps((nonce, cipher_text, aad))
@@ -107,6 +115,10 @@ class DecryptSink(Sink):
     def handle_read(self):
         assert self.other
 
-        nonce, cipher_text, aad = pickle.loads(self.recv(4096*4))
+        try:
+            nonce, cipher_text, aad = pickle.loads(self.recv(4096*4))
+        except EOFError:
+            self.close()
+
         aesgcm = AESGCM(self.__key)
         self.other.buf += aesgcm.decrypt(nonce, cipher_text, aad)
