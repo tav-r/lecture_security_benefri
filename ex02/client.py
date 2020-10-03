@@ -26,11 +26,13 @@ class ProxyClient(asyncore.dispatcher):
         3. The client generates a symmetric AES-GCM session key and sends it
            to the server
         4. The client starts listening for an application to connect
-        5. As soon as an application connects, the server starts reading data
-           from the new socket, encrypts it and forwards it to the server
-           (and vice versa)
+        5. When an application is connected, the server starts...:
+            a) ...reading data from the application, encrypts it and forwards
+               it to the client
+            b) ...reading data from the client, decrypts it and forwards it to
+               the application
     """
-
+ 
     def __init__(
         self,
         enc_addr: str,

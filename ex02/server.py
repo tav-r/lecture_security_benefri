@@ -14,8 +14,8 @@ from sinks import EncryptSink, DecryptSink
 
 def print_usage(prog_name):
     """Print program usage"""
-    print(f"Usage: {prog_name} SERVER_ADDRESS SERVER PORT PROXY_ADDRESS "
-          f"PROXY_PORT")
+    print(f"Usage: {prog_name} SERVER_ADDRESS SERVER_PORT CONNECTION_ADDRESS "
+          f"CONNECTION_PORT")
 
 
 def get_rsa_keys(keysize: int) -> Tuple[Tuple[int, int], Tuple[int, int]]:
@@ -42,10 +42,12 @@ class ProxyServer(asyncore.dispatcher):
     The "protocol" works like this:
         1. When the proxy client connects, an rsa public key is sent
         2. The server waits for the client to send an encrypted AES-GCM key
-        3. The server starts listening for a connection from an application
-        4. As soon as an application connects, the server starts reading data
-           from the new socket, encrypts it and forwards it to the client
-           (and vice versa)
+        3. The server connects to the given application port
+        4. When successfully connected, the server starts...:
+            a) ...reading data from the application, encrypts it and forwards
+               it to the client
+            b) ...reading data from the client, decrypts it and forwards it to
+               the application
     """
 
     def __init__(
@@ -94,9 +96,7 @@ class ProxyServer(asyncore.dispatcher):
         print(f"[*] Encrypted tunnel established, starting app server at "
               f"{self.__app_addr}:{self.__app_port}")
 
-        app_sock = socket.create_server((self.__app_addr, self.__app_port))
-        app_sock.listen(5)
-        app, (app_ip, app_port) = app_sock.accept()
+        app = socket.create_connection((self.__app_addr, self.__app_port))
 
         print(f"[*] An app connected from {app_ip}:{app_port}, starting "
               f"communication")
