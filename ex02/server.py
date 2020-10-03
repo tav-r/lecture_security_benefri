@@ -1,19 +1,37 @@
-from typing import List, Optional, Tuple
+"""
+Implementation of the proxy server.
+"""
 import asyncore
 import pickle
 import socket
+
+from typing import Tuple
+from subprocess import check_output
 
 from custom_crypto import rsa
 from sinks import EncryptSink, DecryptSink
 
 
-def get_default_rsa_keys() -> Tuple[Tuple[int, int], Tuple[int, int]]:
+def print_usage(prog_name):
+    """Print program usage"""
+    print(f"Usage: {prog_name} SERVER_ADDRESS SERVER PORT PROXY_ADDRESS "
+          f"PROXY_PORT")
+
+
+def get_rsa_keys(keysize: int) -> Tuple[Tuple[int, int], Tuple[int, int]]:
     """
     Get a hardcorded rsa pub/private key pair.
     """
 
-    p = 287756783560809232147319204051814079727
-    q = 301571122384786708958989910930476973377
+    p = int(
+        check_output(
+            ["openssl", "prime", "-generate", "-bits", str(keysize // 2)]
+        ).decode().strip())
+    q = int(
+        check_output(
+            ["openssl", "prime", "-generate", "-bits", str(keysize // 2)]
+        ).decode().strip())
+
     return rsa.gen_key(p, q, 2**16+1)
 
 
@@ -35,7 +53,8 @@ class ProxyServer(asyncore.dispatcher):
         enc_addr: str,
         enc_port: int,
         app_addr: str,
-        app_port: int
+        app_port: int,
+        rsa_keysize=2048
     ):
         super().__init__()
 
@@ -43,9 +62,9 @@ class ProxyServer(asyncore.dispatcher):
         self.__app_port = app_port
         self.__key = None
 
-        print("[*] Generating key pair")
+        print(f"[*] Generating key pair (keysize = {rsa_keysize})")
 
-        self.__pub_key, self.__priv_key = get_default_rsa_keys()
+        self.__pub_key, self.__priv_key = get_rsa_keys(rsa_keysize)
 
         # start listening for incoming connection from the client
         self.create_socket()
@@ -53,7 +72,7 @@ class ProxyServer(asyncore.dispatcher):
         self.bind((enc_addr, enc_port))
         self.listen(1)
 
-        print(f"[*] Encryption server started, listening for connections at"
+        print(f"[*] Encryption server started, listening for connections at "
               f"{enc_addr}:{enc_port}")
 
     def handle_accepted(self, sock, addr):
@@ -90,6 +109,19 @@ class ProxyServer(asyncore.dispatcher):
 
 
 if __name__ == "__main__":
-    one = ProxyServer('127.0.0.1', 3333, '127.0.0.1', 3000)
+    from sys import argv, exit as sys_exit
+    from os import EX_USAGE
+
+    if len(argv) != 5:
+        print_usage(argv[0])
+        sys_exit(EX_USAGE)
+
+    _, srv_ip, srv_port, app_ip, app_port = argv
+
+    try:
+        one = ProxyServer(srv_ip, int(srv_port), app_ip, int(app_port))
+    except ValueError:
+        print("Invalid port number")
+        sys_exit(EX_USAGE)
 
     asyncore.loop()

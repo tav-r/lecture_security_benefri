@@ -9,6 +9,12 @@ from custom_crypto import rsa
 from sinks import DecryptSink, EncryptSink
 
 
+def print_usage(prog_name):
+    """Print program usage"""
+    print(f"Usage: {prog_name} CONNECTION_ADDRESS CONNECTION_PORT "
+          f"PROXY_ADDRESS PROXY_PORT")
+
+
 class ProxyClient(asyncore.dispatcher):
     """
     A proxy client for an encrypted tunnel.
@@ -71,6 +77,19 @@ class ProxyClient(asyncore.dispatcher):
 
 
 if __name__ == "__main__":
-    client = ProxyClient('127.0.0.1', 3333, "127.0.0.1", 4444)
+    from sys import argv, exit as sys_exit
+    from os import EX_USAGE
+
+    if len(argv) != 5:
+        print_usage(argv[0])
+        sys_exit(EX_USAGE)
+
+    _, srv_ip, srv_port, app_ip, app_port = argv
+
+    try:
+        one = ProxyClient(srv_ip, int(srv_port), app_ip, int(app_port))
+    except ValueError:
+        print("Invalid port number")
+        sys_exit(EX_USAGE)
 
     asyncore.loop()
