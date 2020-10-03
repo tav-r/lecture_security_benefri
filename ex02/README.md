@@ -1,4 +1,11 @@
 # Assignment 2
+## Requirements
+To run the application, `openssl` should be installed (the cli tool).
+
+Furthermore, `python-cryptography` must be installed. To prevent a mess on your machine you should use a virtual environment for python. The easiest way to set it up is to do the following:
+```bash
+cd ex02 && python -m venv . && source bin/activate && pip install -r requirements.txt
+```
 ## Usage
 The server should be started before the client. The server must be run like this:
 ```bash
