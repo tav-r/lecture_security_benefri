@@ -11,8 +11,8 @@ from sinks import DecryptSink, EncryptSink
 
 def print_usage(prog_name):
     """Print program usage"""
-    print(f"Usage: {prog_name} CONNECTION_ADDRESS CONNECTION_PORT "
-          f"PROXY_ADDRESS PROXY_PORT")
+    print(f"Usage: {prog_name} SERVER_ADDRESS SERVER_PORT "
+          f"LISTEN_ADDRESS LISTEN_PORT")
 
 
 class ProxyClient(asyncore.dispatcher):

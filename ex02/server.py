@@ -14,7 +14,7 @@ from sinks import EncryptSink, DecryptSink
 
 def print_usage(prog_name):
     """Print program usage"""
-    print(f"Usage: {prog_name} SERVER_ADDRESS SERVER_PORT CONNECTION_ADDRESS "
+    print(f"Usage: {prog_name} LISTEN_ADDRESS LISTEN_PORT CONNECTION_ADDRESS "
           f"CONNECTION_PORT")
 
 
