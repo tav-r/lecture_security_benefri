@@ -98,9 +98,8 @@ class EncryptSink(Sink):
         aesgcm = AESGCM(self.__key)
         nonce = os.urandom(12)
 
-        aad = b"???"
-        cipher_text = aesgcm.encrypt(nonce, data, aad)
-        self.other.buf += pickle.dumps((nonce, cipher_text, aad))
+        cipher_text = aesgcm.encrypt(nonce, data, b"")
+        self.other.buf += pickle.dumps((nonce, cipher_text, b""))
 
 
 class DecryptSink(Sink):
