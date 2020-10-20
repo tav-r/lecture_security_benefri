@@ -49,7 +49,7 @@ class ProxyClient(asyncore.dispatcher):
             (enc_addr, enc_port)
         )
 
-        print(f"[*] Connection to {enc_addr}:{enc_port} established")
+        print(f"[*] Connection to {enc_addr}:{enc_port} established, nice!")
 
         pub_key: Tuple[int, int] = pickle.loads(srv_sock.recv(2048))
 
