@@ -8,6 +8,9 @@ server = Server('ldap.secuis.fun:8443', use_ssl=True, get_info=ALL)
 conn = Connection(server, 'cn=admin,dc=ldap,dc=secuis,dc=fun', 'ta643upKzcANJU2c!6aj', auto_bind=True)
 print(conn)
 
+#Print server's schema
+#print (server.schema)
+
 #look for all Uniperson and print them before adding
 conn.search('ou=people,dc=ldap,dc=secuis,dc=fun', '(objectClass=UniPerson)')
 print(conn.entries)
