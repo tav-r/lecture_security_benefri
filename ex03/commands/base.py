@@ -2,13 +2,18 @@ from abc import ABCMeta
 
 
 class Command(metaclass=ABCMeta):
-    def __init__(self, name="base command", callback=None):
+    def __init__(self, name="base command", description="", callback=None):
         self.__cmd_name = name
+        self.__description = description
         self.__callback = callback
 
     @property
     def cmd_name(self):
         return self.__cmd_name
+
+    @property
+    def description(self):
+        return self.__description
 
     def run(self, *args, **kwargs):
         if self.__callback:

@@ -1,26 +1,30 @@
 """A simple interactive LDAP client for the command line."""
 
 import getpass
-from typing import Union
+from typing import Union, Tuple, List
 from sys import stderr, exit as sys_exit
 
 import ldap
 
 from commands.base import Command
 from commands.exit import ExitCommand
+from commands.help import HelpCommand
 
 
 class LDAPClient():
     """An interactive LDAP client."""
 
-    def __init__(self, hostname, user, password):
+    def __init__(self, hostname: str, user: str, password: str):
         ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT,
                         ldap.OPT_X_TLS_NEVER)
         self.__conn = None
         self.__hostname = hostname
         self.__user = user
         self.__password = password
-        self.__cmds = [ExitCommand()]
+        self.__cmds: List[Command] = [ExitCommand()]
+
+        cmd_desc = {cmd.cmd_name: cmd.description for cmd in self.__cmds}
+        self.__cmds.append(HelpCommand(cmd_desc))
 
         self.__prompt = "> "
 
@@ -35,11 +39,13 @@ class LDAPClient():
         print(f"[*] successfully logged in as {self.__conn.whoami_s()}")
         cmd = None
         while not cmd or not cmd.end():
-            cmd = self.__get_matching(input(self.__prompt))
+            cmd, cmd_args = self.__get_matching(input(self.__prompt))
             if cmd:
-                cmd.run()
+                cmd.run(*cmd_args)
 
-    def __get_matching(self, cmd_str) -> Union[None, Command]:
+    def __get_matching(self, cmd_str: str)\
+            -> Union[None, Tuple[Command, List[str]]]:
+
         cmd_name, *cmd_args = cmd_str.split(" ", 1)
         cmds = [cmd for cmd in self.__cmds
                 if cmd.cmd_name.startswith(cmd_name)]
@@ -52,7 +58,7 @@ class LDAPClient():
             print("ambiguous command")
             return None
 
-        return cmds.pop()
+        return cmds.pop(), cmd_args
 
     def __enter__(self):
         self.__conn = ldap.initialize(self.__hostname)
