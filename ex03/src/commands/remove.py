@@ -1,3 +1,5 @@
+"""Definition of the 'remove' command."""
+
 from ldap3 import Connection as ldap_Connection
 
 from .base import Command
@@ -5,6 +7,7 @@ from . import DN
 
 
 class RemoveCommand(Command):
+    """Command to remove an LDAP entry."""
     def __init__(self, client):
         
         def remove_entry(cn=None):

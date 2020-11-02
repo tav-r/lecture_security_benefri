@@ -42,18 +42,22 @@ class LDAPClient():
                 if cmd:
                     cmd.run(*cmd_args)
             except (EOFError, KeyboardInterrupt):
+                print("Exiting...")
                 self.disconnect()
 
     @property
     def running(self):
+        """Check if the client is running."""
         return self.__conn is not None
 
     @property
     def connection(self):
+        """The connection the client is using."""
         return self.__conn
 
     @property
     def commands(self):
+        """A list of the commands the client supports."""
         return self.__cmds
 
     def __get_matching(self, cmd_str: str)\
@@ -74,12 +78,14 @@ class LDAPClient():
         return cmds.pop(), cmd_args
 
     def disconnect(self):
+        """Disconnect the client from the server."""
         if self.__conn:
             self.__conn.unbind()
 
         self.__conn = None
 
     def connect(self):
+        """Connect the client to the server."""
         srv = Server(self.__hostname, use_ssl=True, get_info=ldap_ALL)
         self.__conn = Connection(srv, self.__user, self.__password,
                                  auto_bind=True,
@@ -93,34 +99,3 @@ class LDAPClient():
     def __exit__(self, _, __, ___):
         if self.__conn:
             self.__conn.unbind()
-
-
-def main():
-    """Create a client instance and run it."""
-
-    arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument("-H", "--hostname", dest="hostname",
-                            help="hostname of ldap server")
-    arg_parser.add_argument("-u", "--username", dest="username",
-                            help="username for login")
-    arg_parser.add_argument("-p", "--password", dest="password",
-                            help="password for login", default=None)
-    args = arg_parser.parse_args()
-
-    if not args.username:
-        print("Please specify a username with the '-u' flag", file=stderr)
-        sys_exit(1)
-
-    if not args.hostname:
-        print("Please specify a hostname with the '-H' flag", file=stderr)
-        sys_exit(1)
-
-    passwd = args.password if args.password else getpass.getpass()
-
-    with LDAPClient(args.hostname, args.username, passwd) as client:
-        client.run()
-
-
-if __name__ == "__main__":
-    import argparse
-    main()

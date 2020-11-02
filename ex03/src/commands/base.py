@@ -1,7 +1,10 @@
+"""Defintion of the interface for commands."""
+
 from abc import ABCMeta
 
 
 class Command(metaclass=ABCMeta):
+    """Interface for commands."""
     def __init__(self, name="base command",
                  description="", callback=None):
         self.__cmd_name = name

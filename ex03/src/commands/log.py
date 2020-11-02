@@ -1,3 +1,5 @@
+"""Definition of the 'login' command."""
+
 import crypt
 import hmac
 
@@ -8,6 +10,7 @@ from . import DN
 
 
 class LogCommand(Command):
+    """Command to check a the of a given person."""
     def __init__(self, client):
 
         def login(cn_pw=None):

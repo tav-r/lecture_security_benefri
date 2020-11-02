@@ -1,3 +1,5 @@
+"""Definition of the 'see' command"""
+
 from ldap3 import Connection as ldap_Connection, ObjectDef, Reader
 
 from .base import Command
@@ -5,6 +7,7 @@ from . import DN, OBJECT_CLASS, search_entries
 
 
 class SeeCommand(Command):
+    """Command to search a person."""
     def __init__(self, client):
         
         def see_entry(cn=None):

@@ -1,9 +1,12 @@
+"""Definition of the 'help' command."""
+
 from typing import Dict
 
 import src.commands.base
 
 
 class HelpCommand(src.commands.base.Command):
+    """Command to display an overview of the available commands."""
     def __init__(self, client):
 
         def print_help():

@@ -1,5 +1,7 @@
+"""Definition of the 'add' command."""
+
 import crypt
-from typing import Tuple, Optional
+from typing import Optional
 
 from .base import Command
 from . import DN, OBJECT_CLASS
@@ -8,6 +10,7 @@ from ldap3 import Writer, ObjectDef, Entry
 
 
 class AddCommand(Command):
+    """Command to add new entrys to the LDAP."""
     def __init__(self, client):
 
         def add_entry(cn: Optional[str] = None):
