@@ -1,6 +1,6 @@
 #an ez ldaps client, assignment 03 security lecture, mka 2020-11-02
 
-from ldap3 import Server, Connection, ALL, MODIFY_REPLACE, ObjectDef, Reader, Writer, AttrDef
+from ldap3 import Server, Connection, ALL, ObjectDef, Reader, Writer, AttrDef
 
 #connect to server
 server = Server('ldap.secuis.fun:8443', use_ssl=True, get_info=ALL)
