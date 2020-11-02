@@ -12,7 +12,7 @@ from .base import Command
 def modify_interactive(entry: WritableEntry) -> None:
     """Interactively modify attributes of an LDAP entry."""
     for key, val in entry.entry_attributes_as_dict.items():
-        if key == "objectClass":
+        if key in ["objectClass", "cn"]:
             continue
 
         msg = f"> ({val.pop()}, leave empty for unchanged) {key}="
