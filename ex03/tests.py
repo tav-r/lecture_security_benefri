@@ -16,14 +16,6 @@ conn.search('ou=people,dc=ldap,dc=secuis,dc=fun', '(objectClass=UniPerson)')
 #print(conn.entries)
 
 #look for all attributes of Uniperson from schema, save it in an iterable "ObjectDef"
-obj_uniperson = ObjectDef('UniPerson', conn)
-r = Reader(conn,obj_uniperson,'ou=people,dc=ldap,dc=secuis,dc=fun')
-r.search()
-print(r[4].entry_attributes)
-print(r[4].entry_mandatory_attributes)
-
-w = Writer(conn,obj_uniperson,'ou=people,dc=ldap,dc=secuis,dc=fun')
-
 
 #print(person)
 #for test in person:
@@ -52,7 +44,7 @@ check = conn.compare('cn='+ name +',ou=people,dc=ldap,dc=secuis,dc=fun','userPas
 #print()
 
 #look for all Uniperson and print them before deleting
-conn.search('cn=Arnold Schwarzenegger,ou=people,dc=ldap,dc=secuis,dc=fun', '(objectClass=UniPerson)',attributes=['*'])
+conn.search('ou=people,dc=ldap,dc=secuis,dc=fun', '(objectClass=UniPerson)',attributes=['*'])
 #print(conn.entries)
 
 #remove new Uniperson
