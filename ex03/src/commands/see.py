@@ -21,6 +21,6 @@ class SeeCommand(Command):
                     print(entry)
             else:
                 print("no matching entry found")
-    
+
         super().__init__("see", "display the information of one person.",
                          see_entry)

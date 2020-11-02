@@ -7,7 +7,7 @@ from sys import stderr, exit as sys_exit
 from ldap3 import Server, Connection, SAFE_SYNC, ALL as ldap_ALL
 
 from .commands import base, exit as _exit, help as _help, all as _all,\
-                      see, add, remove
+                      see, add, remove, log
 
 
 class LDAPClient():
@@ -21,7 +21,8 @@ class LDAPClient():
         self.__cmds: List[base.Command] =\
             [_exit.ExitCommand(self), _help.HelpCommand(self),
              _all.ListAllCommand(self), see.SeeCommand(self),
-             add.AddCommand(self), remove.RemoveCommand(self)]
+             add.AddCommand(self), remove.RemoveCommand(self),
+             log.LogCommand(self)]
 
         self.__prompt = "> "
 
