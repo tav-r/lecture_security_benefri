@@ -4,7 +4,7 @@ import getpass
 from typing import Union, Tuple, List
 from sys import stderr, exit as sys_exit
 
-from ldap3 import Server, Connection, SAFE_SYNC, ALL as ldap_ALL
+from ldap3 import Server, Connection, SAFE_SYNC, ALL as ldap_ALL, ObjectDef
 
 from .commands import base, exit as _exit, help as _help, all as _all,\
                       see, add, remove, log

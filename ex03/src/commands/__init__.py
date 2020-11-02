@@ -1,6 +1,12 @@
-NEW_PEOPLE_ATTRIBUTES = ["description", "mail"]
+from ldap3 import Reader, ObjectDef, Connection as ldap_Connection
 
-PEOPLE_ATTRIBUTES = NEW_PEOPLE_ATTRIBUTES + \
-                    ["cn", "objectClass", "userPassword"]
 DN = "ou=people,dc=ldap,dc=secuis,dc=fun"
 OBJECT_CLASS = "UniPerson"
+
+
+def search_entries(conn: ldap_Connection, _filter=None):
+    obj_uniperson = ObjectDef(OBJECT_CLASS, conn)
+    reader = Reader(conn, obj_uniperson, DN, _filter)
+    reader.search()
+
+    return reader.entries

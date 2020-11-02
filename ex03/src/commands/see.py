@@ -1,7 +1,7 @@
-from ldap3 import Connection as ldap_Connection
+from ldap3 import Connection as ldap_Connection, ObjectDef, Reader
 
 from .base import Command
-from . import PEOPLE_ATTRIBUTES
+from . import DN, OBJECT_CLASS, search_entries
 
 
 class SeeCommand(Command):
@@ -13,14 +13,8 @@ class SeeCommand(Command):
             if not cn:
                 cn = input("> cn=")
 
-            res = conn.search("ou=people,dc=ldap,dc=secuis,dc=fun",
-                              f"(cn={cn})", attributes=PEOPLE_ATTRIBUTES)
-
-            if res:
-                for entry in conn.entries:
-                    print(entry)
-            else:
-                print("no matching entry found")
+            for entry in search_entries(conn, f"(cn={cn})"):
+                print(entry)
 
         super().__init__("see", "display the information of one person.",
                          see_entry)

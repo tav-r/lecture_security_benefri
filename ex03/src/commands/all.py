@@ -1,7 +1,7 @@
 from ldap3 import Connection as ldap_Connection
 
 from .base import Command
-from . import PEOPLE_ATTRIBUTES, DN, OBJECT_CLASS
+from . import search_entries
 
 
 class ListAllCommand(Command):
@@ -9,12 +9,8 @@ class ListAllCommand(Command):
 
         def list_persons():
             conn: ldap_Connection = client.connection
-            res = conn.search(DN, f"(objectclass={OBJECT_CLASS})",
-                              attributes=PEOPLE_ATTRIBUTES)
-
-            if res:
-                for entry in conn.entries:
-                    print(entry)
+            for entry in search_entries(conn):
+                print(entry)
 
         super().__init__("all",
                          "display a list of all the persons in the LDAP",
