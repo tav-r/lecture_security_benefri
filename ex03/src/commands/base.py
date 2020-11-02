@@ -2,7 +2,8 @@ from abc import ABCMeta
 
 
 class Command(metaclass=ABCMeta):
-    def __init__(self, name="base command", description="", callback=None):
+    def __init__(self, name="base command",
+                 description="", callback=None):
         self.__cmd_name = name
         self.__description = description
         self.__callback = callback

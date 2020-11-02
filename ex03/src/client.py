@@ -4,27 +4,24 @@ import getpass
 from typing import Union, Tuple, List
 from sys import stderr, exit as sys_exit
 
-import ldap
+from ldap3 import Server, Connection, SAFE_SYNC, ALL as ldap_ALL
 
-from commands.base import Command
-from commands.exit import ExitCommand
-from commands.help import HelpCommand
+from .commands import base, exit as _exit, help as _help, all as _all,\
+                      see, add, remove
 
 
 class LDAPClient():
     """An interactive LDAP client."""
 
     def __init__(self, hostname: str, user: str, password: str):
-        ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT,
-                        ldap.OPT_X_TLS_NEVER)
         self.__conn = None
         self.__hostname = hostname
         self.__user = user
         self.__password = password
-        self.__cmds: List[Command] = [ExitCommand()]
-
-        cmd_desc = {cmd.cmd_name: cmd.description for cmd in self.__cmds}
-        self.__cmds.append(HelpCommand(cmd_desc))
+        self.__cmds: List[base.Command] =\
+            [_exit.ExitCommand(self), _help.HelpCommand(self),
+             _all.ListAllCommand(self), see.SeeCommand(self),
+             add.AddCommand(self), remove.RemoveCommand(self)]
 
         self.__prompt = "> "
 
@@ -36,15 +33,30 @@ class LDAPClient():
 
         assert self.__conn
 
-        print(f"[*] successfully logged in as {self.__conn.whoami_s()}")
+        print(f"[*] successfully logged in as {self.__conn.user}")
         cmd = None
-        while not cmd or not cmd.end():
-            cmd, cmd_args = self.__get_matching(input(self.__prompt))
-            if cmd:
-                cmd.run(*cmd_args)
+        while self.running:
+            try:
+                cmd, cmd_args = self.__get_matching(input(self.__prompt))
+                if cmd:
+                    cmd.run(*cmd_args)
+            except (EOFError, KeyboardInterrupt):
+                self.disconnect()
+
+    @property
+    def running(self):
+        return self.__conn is not None
+
+    @property
+    def connection(self):
+        return self.__conn
+
+    @property
+    def commands(self):
+        return self.__cmds
 
     def __get_matching(self, cmd_str: str)\
-            -> Union[None, Tuple[Command, List[str]]]:
+            -> Union[Tuple[None, None], Tuple[base.Command, List[str]]]:
 
         cmd_name, *cmd_args = cmd_str.split(" ", 1)
         cmds = [cmd for cmd in self.__cmds
@@ -52,24 +64,34 @@ class LDAPClient():
 
         if len(cmds) == 0:
             print("unknown command")
-            return None
+            return None, None
 
         if len(cmds) > 1:
             print("ambiguous command")
-            return None
+            return None, None
 
         return cmds.pop(), cmd_args
 
+    def disconnect(self):
+        if self.__conn:
+            self.__conn.unbind()
+
+        self.__conn = None
+
+    def connect(self):
+        srv = Server(self.__hostname, use_ssl=True, get_info=ldap_ALL)
+        self.__conn = Connection(srv, self.__user, self.__password,
+                                 auto_bind=True,
+                                 return_empty_attributes=True)
+
     def __enter__(self):
-        self.__conn = ldap.initialize(self.__hostname)
-        self.__conn.set_option(ldap.OPT_REFERRALS, 0)
-        self.__conn.simple_bind(self.__user, self.__password)
+        self.connect()
 
         return self
 
     def __exit__(self, _, __, ___):
         if self.__conn:
-            self.__conn.unbind_ext()
+            self.__conn.unbind()
 
 
 def main():
