@@ -45,9 +45,12 @@ while userinput != "q":
         print()
         cninput=input('please enter the Common Name CN of entry you want to show : ')
         print()
-        r = Reader(c, o, 'cn=' + cninput + ',ou=people,dc=ldap,dc=secuis,dc=fun')
+        query = ('cn: '+cninput)
+        r = Reader(c, o, d, query)
         r.search()
         print(r.entries)
+        print('print(type(o))')
+        print(type(o))
 
     if userinput == "u":
         print()
@@ -74,18 +77,19 @@ while userinput != "q":
 
     if userinput == "s":
         print()
-        print('s : search attributes of UniPerson-entries in ',d )
+        print('s : search attributes of '+ oc + '-entries in ',d )
         print()
         r = Reader(c, o, d)
         r.search()
         print('the attributes are ',r[0].entry_attributes)
         print()
         attribute = input('please specify which attribute to search : ')
-        value = input('please specify which value the attribute has : ')
-        for iter in r:
-            print(r[iter].entry_attributes)
-            #for attrib in r[entry]:
-             #   print(r[entry].entry_attributes)
+        value = input('please specify which value to find (you can use wildcards with *): ')
+        query = (attribute + ' : ' + value)
+        r = Reader(c, o, d, query)
+        output=r.search()
+        print(output)
+        print()
 
     if userinput == "v":
         print()
