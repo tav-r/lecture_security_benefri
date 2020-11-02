@@ -108,13 +108,13 @@ while userinput != "q":
 
         #read object from directory and create a writer cursor from/for this entry
         r = Reader(c, o, entrydn)
-        print(r)
         r.search()
         list_of_attributes = r[0].entry_attributes
         list_of_mandatory_attributes = r[0].entry_mandatory_attributes
         list_of_optional_attributes = Diff(list_of_attributes, list_of_mandatory_attributes)
         w = Writer.from_cursor(r)
-
+        e = w[0] #dn can never be double, so the first element is also the only one
+        print(e)
         # input loop for mandatory attribs
         for mandatoryattrib in list_of_mandatory_attributes:
             if mandatoryattrib != 'objectClass':  # skip attribute "ObjectClass" because it comes from Reader r and cannot be edited
@@ -135,6 +135,7 @@ while userinput != "q":
                 'input value for optional attribute ' + optionalattrib + ' (can be empty, just press enter): ')
             e[optionalattrib] = userinput  # uses MODIFY_REPLACE
 
+        # commit changes to w[0]
         e.entry_commit_changes()
 
     #d deletes the entry the user knows the dn of
