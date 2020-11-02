@@ -3,12 +3,13 @@
 import crypt
 
 from ldap3 import Connection as ldap_Connection, ObjectDef, Writer
+from ldap3.abstract.entry import WritableEntry 
 
-from . import DN, OBJECT_CLASS, search_entries
+from . import search_entries
 from .base import Command
 
 
-def modify_interactive(entry):
+def modify_interactive(entry: WritableEntry) -> None:
     """Interactively modify attributes of an LDAP entry."""
     for key, val in entry.entry_attributes_as_dict.items():
         if key == "objectClass":
