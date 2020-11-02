@@ -31,5 +31,7 @@ class AddCommand(Command):
                 setattr(entry, attr, val)
 
             writer.commit()
-            
+
+            print("Successfully added person!")
+
         super().__init__("add", "adds a new person to the LDAP.", add_entry)

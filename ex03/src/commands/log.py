@@ -24,20 +24,24 @@ class LogCommand(Command):
                     print("invalid arguments. use this subcommand like this:"
                           f"{self.cmd_name} [cn:userPassword]")
 
+                    return
+
             res = conn.search(DN, f"(cn={cn})", attributes="userPassword")
+            if not res:
+                print(f"person {cn} not found...")
+                return
 
             assert len(conn.entries) == 1
 
-            if res:
-                crypt_hash = conn.entries.pop()\
-                             .entry_attributes_as_dict["userPassword"]\
-                             .pop().decode()\
-                             .strip("{CRYPT}")
+            crypt_hash = conn.entries.pop()\
+                .entry_attributes_as_dict["userPassword"]\
+                .pop().decode()\
+                .strip("{CRYPT}")
 
-                if hmac.compare_digest(crypt.crypt(pw, crypt_hash),
-                                       crypt_hash):
-                    print("Successfully logged in!")
-                else:
-                    print("Passwords did not match!")
+            if hmac.compare_digest(crypt.crypt(pw, crypt_hash),
+                                   crypt_hash):
+                print("Successfully logged in!")
+            else:
+                print("Passwords did not match!")
 
         super().__init__("login", "test login credentials.", login)
