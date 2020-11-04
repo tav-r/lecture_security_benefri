@@ -1,6 +1,8 @@
 #an ez ldaps client, assignment 03 security lecture, mka 2020-11-02
 
+import crypt, hmac
 from ldap3 import Server, Connection, ALL, ObjectDef, Reader, Writer, AttrDef
+
 
 #connect to server
 server = Server('ldap.secuis.fun:8443', use_ssl=True, get_info=ALL)
@@ -17,7 +19,8 @@ d = 'ou=people,dc=ldap,dc=secuis,dc=fun'
 def Diff(li1, li2):
     return (list(list(set(li1)-set(li2)) + list(set(li2)-set(li1))))
 
-#main program, sorry no nice pattern, I learned Python 3 months ago
+
+#main program - sorry no time left for a nice pattern
 userinput = ""
 while userinput != "q":
 
@@ -47,6 +50,8 @@ while userinput != "q":
         print()
         print('c : create an object of objectClass '+ oc +' in', d)
         print()
+
+        #use cursor from ldap3's abstraction layer in order to get information which attributes are mandatory or optional
         r = Reader(c, o, d)
         r.search()
         list_of_attributes = r[0].entry_attributes
@@ -62,20 +67,31 @@ while userinput != "q":
 
         # input loop for mandatory attribs
         for mandatoryattrib in list_of_mandatory_attributes:
-            if mandatoryattrib != 'objectClass':  # skip attribute "ObjectClass" because it comes from Reader r and cannot be edited
+
+            # skip attribute "ObjectClass" because it comes from Reader r and cannot be edited
+            if mandatoryattrib != 'objectClass':
                 userinput=''
                 while userinput == '' :
+
                     # cn in dn can be different from attribute cn
                     if mandatoryattrib == 'cn':
                         userinput=input('input value for mandatory attribute '+ mandatoryattrib + ' (cannot be empty, same cn as in dn is recommended): ')
                     else:
                         userinput=input('input value for mandatory attribute '+ mandatoryattrib + ' (cannot be empty): ')
-                        e[mandatoryattrib] = userinput #uses MODIFY_REPLACE
 
-        # input loop for optional attribs
+                        # if the input is a userPassword, crypt it before pushing to the writer
+                        if mandatoryattrib == 'userPassword':
+                            userinput = '{CRYPT}' + crypt.crypt(userinput, crypt.METHOD_SHA512)
+                        e[mandatoryattrib] = userinput
+
+        # input loop for optional attribs and handle them differently (optional input)
         for optionalattrib in list_of_optional_attributes:
             userinput = input('input value for optional attribute ' + optionalattrib + ' (can be empty, just press enter): ')
-            e[optionalattrib] = userinput  # uses MODIFY_REPLACE
+
+            # if the input is a userPassword, crypt it before pushing to the writer
+            if optionalattrib == 'userPassword':
+                userinput = '{CRYPT}' + crypt.crypt(userinput, crypt.METHOD_SHA512)
+            e[optionalattrib] = userinput
 
         e.entry_commit_changes()
 
@@ -113,13 +129,20 @@ while userinput != "q":
         list_of_mandatory_attributes = r[0].entry_mandatory_attributes
         list_of_optional_attributes = Diff(list_of_attributes, list_of_mandatory_attributes)
         w = Writer.from_cursor(r)
-        e = w[0] #dn can never be double, so the first element is also the only one
+
+        # dn cannot be double, so the first element is also the only one
+        e = w[0]
+        print()
+        print('you are editing the following entry')
+        print()
         print(e)
+        print()
         # input loop for mandatory attribs
         for mandatoryattrib in list_of_mandatory_attributes:
             if mandatoryattrib != 'objectClass':  # skip attribute "ObjectClass" because it comes from Reader r and cannot be edited
                 userinput = ''
                 while userinput == '':
+
                     # cn in dn can be different from attribute cn
                     if mandatoryattrib == 'cn':
                         userinput = input(
@@ -127,12 +150,20 @@ while userinput != "q":
                     else:
                         userinput = input(
                             'input value for mandatory attribute ' + mandatoryattrib + ' (cannot be empty): ')
-                        e[mandatoryattrib] = userinput  # uses MODIFY_REPLACE
+
+                        # if the input is a userPassword, crypt it before pushing to the writer
+                        if mandatoryattrib == 'userPassword':
+                            userinput = '{CRYPT}' + crypt.crypt(userinput, crypt.METHOD_SHA512)
+                        # the writer uses ldap3's MODIFY_REPLACE in the background, which replaces existing values in
+                        e[mandatoryattrib] = userinput
 
         # input loop for optional attribs
         for optionalattrib in list_of_optional_attributes:
-            userinput = input(
-                'input value for optional attribute ' + optionalattrib + ' (can be empty, just press enter): ')
+            userinput = input('input value for optional attribute ' + optionalattrib + ' (can be empty, just press enter): ')
+
+            # if the input is a userPassword, crypt it before pushing to the writer
+            if optionalattrib == 'userPassword':
+                userinput = '{CRYPT}' + crypt.crypt(userinput, crypt.METHOD_SHA512)
             e[optionalattrib] = userinput  # uses MODIFY_REPLACE
 
         # commit changes to w[0]
@@ -180,8 +211,21 @@ while userinput != "q":
         print()
         print('v : verify password', d)
         print()
-        userinputvalue = input("type a string you are looking for in" + d)
-        print(r.search(userinputvalue))
+        userinput_cn = input('please enter the Common Name of the dn-entry you want to check the password : ')
+        print()
+        userinput_pwd = input('please enter the password stored in attribute \'userPassword\' : ')
+        entrydn = ('cn=' + userinput_cn + ',' + d)
+        r = Reader(c, o, entrydn)
+        r.search()
+
+        # dn is unique so we take the first list of attributes and extract userPassword
+        hash_from_DIT=(r[0].userPassword.value.decode().strip("{CRYPT}"))
+
+        if hmac.compare_digest(crypt.crypt(userinput_pwd, hash_from_DIT),hash_from_DIT):
+            print("the password matches")
+        else:
+            print("the password doesn't match")
+
 
     #q to quit program
     if userinput == "q":
