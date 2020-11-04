@@ -3,7 +3,7 @@
 import crypt, hmac
 from ldap3 import Server, Connection, ALL, ObjectDef, Reader, Writer, AttrDef
 
-###connect to server ("server" needed as global)
+###connect to server ("server" needed as global) securely, but dont check the certifcate (because the cert is not valid on the server)
 server = Server('ldap.secuis.fun:8443', use_ssl=True, get_info=ALL)
 
 ### global variables allowed / meant to be hard coded ######
@@ -51,41 +51,55 @@ def	Create():
     w = Writer.from_cursor(r)
 
     # create new object using the writer created from the reader r
+    # input loop for cn
     userinput = ''
     while userinput == '':
-        #userinput = input('input Common Name (cn) value of Destinguished Name (dn) (cannot be empty): ')
         userinput = input('input Common Name (cn) value of Destinguished Name (dn) (cannot be empty): ')
-        commonname = userinput
-    e = w.new('cn='+userinput+',' + d)
+        if userinput != '':
+            commonname = userinput
+
+            #hotfix to avoid a crash when the cn already exists
+            try:
+                e = w.new('cn='+commonname+',' + d)
+            except:
+                print()
+                print("invalid username, please try another one")
+                print()
+                userinput=''
 
     # input loop for mandatory attribs
-    for mandatoryattrib in list_of_mandatory_attributes:
+    userinput = ''
+    while userinput == '':
+        for mandatoryattrib in list_of_mandatory_attributes:
 
-        # skip attribute "ObjectClass" because it comes from Reader r and cannot be edited
-        if mandatoryattrib != 'objectClass':
-            userinput=''
-            while userinput == '' :
-
+            # skip attribute "ObjectClass" because it comes from Reader r and cannot be edited (in the assigment only "email" is a normal unhandled mandatory attribute)
+            if mandatoryattrib != 'objectClass':
                 # cn in dn cannot/should not be different from attribute cn and is mandatory I guess
                 if mandatoryattrib == 'cn':
-                    #userinput=input('input value for mandatory attribute '+ mandatoryattrib + ' (cannot be empty, same cn as in dn is recommended): ')
                     userinput = commonname
                 else:
-                    userinput=input('input value for mandatory attribute '+ mandatoryattrib + ' (cannot be empty): ')
+                    userinput = ''
+                    while userinput == '':
+                        userinput=input('input value for mandatory attribute '+ mandatoryattrib + ' (cannot be empty): ')
 
-                    # if the input is a userPassword, crypt it before pushing to the writer
-                    if mandatoryattrib == 'userPassword':
-                        userinput = '{CRYPT}' + crypt.crypt(userinput, crypt.METHOD_SHA512)
+                        # if the input is a userPassword, crypt it before pushing to the writer
+                        if mandatoryattrib == 'userPassword':
+                            if userinput != '':
+                                userinput = '{CRYPT}' + crypt.crypt(userinput, crypt.METHOD_SHA512)
                     e[mandatoryattrib] = userinput
+        e[mandatoryattrib] = userinput
 
     # input loop for optional attribs and handle them differently (optional input)
     for optionalattrib in list_of_optional_attributes:
         userinput = input('input value for optional attribute ' + optionalattrib + ' (can be empty, just press enter): ')
-
+        if not userinput:
+            userinput = ' '
         # if the input is a userPassword, crypt it before pushing to the writer
         if optionalattrib == 'userPassword':
-            userinput = '{CRYPT}' + crypt.crypt(userinput, crypt.METHOD_SHA512)
-        e[optionalattrib] = userinput
+            if userinput != '':
+                userinput = '{CRYPT}' + crypt.crypt(userinput, crypt.METHOD_SHA512)
+    e[optionalattrib] = userinput
+    print(e[optionalattrib])
 
     e.entry_commit_changes()
 
@@ -117,56 +131,71 @@ def Update():
     while userinput == '':
         userinput = input('input Common Name (cn) value of Destinguished Name (dn) (cannot be empty): ')
         commonname = userinput
-    entrydn = ('cn=' + userinput + ',' + d)
 
-    #read object from directory and create a writer cursor from/for this entry
-    r = Reader(c, o, entrydn)
-    r.search()
-    list_of_attributes = r[0].entry_attributes
-    list_of_mandatory_attributes = r[0].entry_mandatory_attributes
-    list_of_optional_attributes = Diff(list_of_attributes, list_of_mandatory_attributes)
-    w = Writer.from_cursor(r)
+        entrydn = ('cn=' + userinput + ',' + d)
 
-    # dn cannot be double, so the first element is also the only one
-    e = w[0]
+        #read object from directory and create a writer cursor from/for this entry
+        r = Reader(c, o, entrydn)
+        r.search()
+        # hotfix to avoid a crash when the cn already exists
+        try:
+            list_of_attributes = r[0].entry_attributes
+            list_of_mandatory_attributes = r[0].entry_mandatory_attributes
+            list_of_optional_attributes = Diff(list_of_attributes, list_of_mandatory_attributes)
+            w = Writer.from_cursor(r)
+
+            # dn cannot be double, so the first element is also the only one
+            e = w[0]
+
+        except:
+            print()
+            print("invalid username, please try another one")
+            print()
+            userinput=''
+
+    #continue if it worked to get the object
     print()
     print('you are editing the following entry')
     print()
     print(e)
     print()
-    # input loop for mandatory attribs
-    for mandatoryattrib in list_of_mandatory_attributes:
-        if mandatoryattrib != 'objectClass':  # skip attribute "ObjectClass" because it comes from Reader r and cannot be edited
-            userinput = ''
-            while userinput == '':
 
-                # cn in dn cannot be different from attribute cn
+    # input loop for mandatory attribs
+    userinput = ''
+    while userinput == '':
+        for mandatoryattrib in list_of_mandatory_attributes:
+
+            # skip attribute "ObjectClass" because it comes from Reader r and cannot be edited (in the assigment only "email" is a normal unhandled mandatory attribute)
+            if mandatoryattrib != 'objectClass':
+                # cn in dn cannot/should not be different from attribute cn and is mandatory I guess
                 if mandatoryattrib == 'cn':
-                    #userinput = input('input value for mandatory attribute ' + mandatoryattrib + ' (cannot be empty, same cn as in dn is recommended): ')
                     userinput = commonname
                 else:
-                    userinput = input(
-                        'input value for mandatory attribute ' + mandatoryattrib + ' (cannot be empty): ')
+                    userinput = ''
+                    while userinput == '':
+                        userinput = input(
+                            'input value for mandatory attribute ' + mandatoryattrib + ' (cannot be empty): ')
 
-                    # if the input is a userPassword, crypt it before pushing to the writer
-                    if mandatoryattrib == 'userPassword':
-                        userinput = '{CRYPT}' + crypt.crypt(userinput, crypt.METHOD_SHA512)
-                    # the writer uses ldap3's MODIFY_REPLACE in the background, which replaces existing values in
+                        # if the input is a userPassword, crypt it before pushing to the writer
+                        if mandatoryattrib == 'userPassword':
+                            if userinput != '':
+                                userinput = '{CRYPT}' + crypt.crypt(userinput, crypt.METHOD_SHA512)
                     e[mandatoryattrib] = userinput
+        e[mandatoryattrib] = userinput
 
-    # input loop for optional attribs
+    # input loop for optional attribs and handle them differently (optional input)
     for optionalattrib in list_of_optional_attributes:
         userinput = input('input value for optional attribute ' + optionalattrib + ' (can be empty, just press enter): ')
-        print()
-
+        if not userinput:
+            userinput = ' '
         # if the input is a userPassword, crypt it before pushing to the writer
         if optionalattrib == 'userPassword':
-            userinput = '{CRYPT}' + crypt.crypt(userinput, crypt.METHOD_SHA512)
-        e[optionalattrib] = userinput  # uses MODIFY_REPLACE
+            if userinput != '':
+                userinput = '{CRYPT}' + crypt.crypt(userinput, crypt.METHOD_SHA512)
+    e[optionalattrib] = userinput
+    print(e[optionalattrib])
 
-    # commit changes to w[0]
     e.entry_commit_changes()
-
 
 
 ############# function to delete a dn entry ################
@@ -204,12 +233,15 @@ def Search():
     value = input('please specify which value to find (you can use wildcards with *): ')
     print()
     query = (attribute + ' : ' + value)
-    r = Reader(c, o, d, query)
-    output=r.search()
-    print(output)
-    print()
-
-
+    try:
+        r = Reader(c, o, d, query)
+        output=r.search()
+        print(output)
+        print()
+    except:
+        print()
+        print("invalid query, please try another one")
+        print()
 ################ function to verify password ##############
 def Verify():
     print()
