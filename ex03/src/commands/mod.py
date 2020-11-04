@@ -19,7 +19,8 @@ def modify_interactive(entry: WritableEntry) -> None:
         ans = input(msg)
 
         if ans:
-            setattr(entry, key, crypt.crypt(ans, crypt.METHOD_SHA512)
+            setattr(entry, key,
+                    f"{{CRYPT}}{crypt.crypt(ans, crypt.METHOD_SHA512)}"
                     if key == "userPassword" else ans)
 
         entry.entry_commit_changes()

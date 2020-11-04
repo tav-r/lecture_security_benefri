@@ -24,7 +24,9 @@ class AddCommand(Command):
 
             for attr in writer.attributes:
                 if attr == "userPassword":
-                    val = crypt.crypt(input(f"> {attr}="), crypt.METHOD_SHA512)
+                    digest = crypt.crypt(input(f"> {attr}="),
+                                         crypt.METHOD_SHA512)
+                    val = f"{{CRYPT}}{digest}"
                 elif attr == "cn":
                     val = cn
                 elif attr == "objectClass":
